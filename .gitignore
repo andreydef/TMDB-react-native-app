@@ -67,3 +67,4 @@ Gemfile
 /.bundle
 /__tests__
 .node-version
+.vscode
