@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
 import Card from '../components/UI/Card';
 
 const AllFavoritesScreen = props => {
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   },
   list: {
     width: '100%',
-    marginTop: 80,
+    marginTop: Platform.OS === 'android' ? 0 : 80,
   },
   separator: {
     marginTop: 10,
