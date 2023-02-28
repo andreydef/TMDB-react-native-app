@@ -68,3 +68,4 @@ Gemfile
 /__tests__
 .node-version
 .vscode
+ios/Podfile.lock

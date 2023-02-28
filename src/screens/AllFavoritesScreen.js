@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
   },
   list: {
     width: '100%',
+    marginTop: 80,
   },
   separator: {
     marginTop: 10,
