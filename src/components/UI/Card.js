@@ -1,14 +1,66 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  TouchableHighlight,
+} from 'react-native';
+import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
+
+import { setPhotoLike, removePhotoLike } from '../../store/actions/photos';
+import { filterUniqueValues } from '../../helpers/index';
 
 const Card = props => {
   const { photo } = props;
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  const allPhotos = useSelector(state => state.photos.allPhotos);
+  const favoritesPhotos = useSelector(state => state.photos.favoritesPhotos);
+
+  const addToFavoritesList = item => dispatch(setPhotoLike(item));
+  const removeFromFavoritesList = item => dispatch(removePhotoLike(item));
+
+  const ifExists = item => {
+    if (
+      favoritesPhotos.filter(favoritePhoto => favoritePhoto?.id === item?.id)
+        .length > 0
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const changeLikeField = likeState => {
+    const filteredData = filterUniqueValues(allPhotos);
+    const photoItem = filteredData.filter(
+      allPhoto => allPhoto?.id === photo?.id,
+    )[0];
+    photoItem.like = likeState;
+
+    const originalObject = allPhotos.find(obj => obj?.id === photoItem?.id);
+    Object.assign(originalObject, photoItem);
+  };
+
+  const onPressLike = item => {
+    if (!ifExists(item)) {
+      addToFavoritesList(item);
+      changeLikeField(true);
+    } else {
+      removeFromFavoritesList(item);
+      changeLikeField(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
-      <TouchableOpacity
+      <TouchableHighlight
         style={styles.socialBarButton}
         onPress={() =>
           navigation.navigate('ItemCard', {
@@ -32,16 +84,18 @@ const Card = props => {
             <View style={styles.socialBarContainer}>
               <View style={styles.socialBarSection}>
                 <TouchableOpacity style={styles.socialBarButton}>
-                  <Text style={styles.socialBarLabel}>
-                    {' '}
-                    {photo?.likes?.length}{' '}
-                  </Text>
+                  <FontAwesomeIcons
+                    onPress={() => onPressLike(photo)}
+                    name={photo?.like ? 'heart' : 'heart-o'}
+                    color="#000"
+                    size={22}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </TouchableHighlight>
     </View>
   );
 };
@@ -51,11 +105,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  userIcon: {
-    height: 30,
-    width: 30,
-    borderRadius: 30,
   },
   card: {
     width: '100%',
@@ -68,17 +117,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     backgroundColor: 'white',
   },
-  cardTitleHeader: {
-    paddingVertical: 15,
-    paddingHorizontal: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   cardHeader: {
     paddingTop: 17,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  cardFooter: {
+    paddingHorizontal: 16,
+    paddingVertical: 15,
   },
   cardContent: {
     paddingVertical: 12.5,
@@ -100,9 +147,6 @@ const styles = StyleSheet.create({
   },
   socialBarSection: {
     marginRight: 20,
-  },
-  socialBarlabel: {
-    marginLeft: 20,
   },
   socialBarButton: {
     flexDirection: 'row',

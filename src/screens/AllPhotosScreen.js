@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   View,
   Text,
@@ -7,12 +8,12 @@ import {
   ActivityIndicator,
   Button,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-
+import { SearchBar } from 'react-native-elements';
 import Card from '../components/UI/Card';
 import Colors from '../constants/Colors';
 
 import * as photosActions from '../store/actions/photos';
+import { filterUniqueValues } from '../helpers/index';
 
 const AllPhotosScreen = props => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,12 +23,18 @@ const AllPhotosScreen = props => {
   const photos = useSelector(state => state.photos.allPhotos);
   const dispatch = useDispatch();
 
+  const [searchPhotos, setSearchPhotos] = useState('');
+  const [filteredDataSource, setFilteredDataSource] = useState(photos || []);
+  const [masterDataSource, setMasterDataSource] = useState([]);
+
   const loadPhotos = useCallback(async () => {
     setError(null);
     try {
       await dispatch(
         photosActions.fetchPhotos({ page: page, allPhotos: photos }),
       );
+      setFilteredDataSource(photos);
+      setMasterDataSource(photos);
     } catch (err) {
       setError(err.message);
     }
@@ -41,7 +48,29 @@ const AllPhotosScreen = props => {
   }, [dispatch, loadPhotos]);
 
   const fetchMoreData = () => {
-    setPage(page + 1);
+    if (!searchPhotos?.length) {
+      setPage(page + 1);
+    }
+  };
+
+  const updateSearch = text => {
+    setSearchPhotos(text);
+    if (text) {
+      const newData = photos.filter(function (item) {
+        const itemData = item.title
+          ? item.title.toUpperCase()
+          : ''.toUpperCase();
+        const textData = text.toUpperCase();
+        return itemData.indexOf(textData) > -1;
+      });
+
+      const uniqueValues = filterUniqueValues(newData);
+      setFilteredDataSource(uniqueValues);
+      setSearchPhotos(text);
+    } else {
+      setFilteredDataSource(masterDataSource);
+      setSearchPhotos(text);
+    }
   };
 
   if (error) {
@@ -61,19 +90,19 @@ const AllPhotosScreen = props => {
     );
   }
 
-  if (!isLoading && photos?.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text>No posts found. Maybe start adding some!</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.screen}>
+      <View style={styles.list}>
+        <SearchBar
+          placeholder="Type Here..."
+          onChangeText={text => updateSearch(text)}
+          onClear={() => setSearchPhotos('')}
+          value={searchPhotos}
+        />
+      </View>
       <FlatList
         style={styles.list}
-        data={photos}
+        data={filteredDataSource}
         keyExtractor={(item, index) => index}
         ItemSeparatorComponent={() => {
           return <View style={styles.separator} />;
